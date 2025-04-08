@@ -1,0 +1,170 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Interactive Document Visualization</title>
+        <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+            }
+            #visualization {
+                width: 800px;
+                height: 600px;
+                margin: 20px auto;
+                border: 1px solid #ccc;
+            }
+            .point {
+                cursor: pointer;
+            }
+            .selected {
+                stroke: red;
+                stroke-width: 2px;
+            }
+            #details {
+                width: 800px;
+                margin: 20px auto;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                background-color: #f9f9f9;
+                white-space: pre-wrap;
+                font-family: monospace;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            .cluster-legend {
+                margin: 10px;
+            }
+            .legend-item {
+                display: inline-block;
+                margin-right: 15px;
+            }
+            .legend-color {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                margin-right: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 style="text-align: center;">Interactive Document Visualization</h1>
+        <div id="visualization"></div>
+        <div class="cluster-legend" id="legend"></div>
+        <div id="details">Click on a point to see document details.</div>
+        
+        <script>
+            // Parse visualization data
+            const vizData = {"points": [{"x": 702.3616333007812, "y": -1173.4732666015625, "cluster": 1, "diversity": 0.5833333333333335, "selected": true, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/__init__.py", "file_name": "__init__.py"}}, {"x": 808.1525268554688, "y": 1645.42138671875, "cluster": 3, "diversity": 0.9201672278234466, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/__main__.py", "file_name": "__main__.py"}}, {"x": 702.3616333007812, "y": -1173.4732666015625, "cluster": 1, "diversity": 0.5833333333333335, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/utils/__init__.py", "file_name": "__init__.py"}}, {"x": -1596.98486328125, "y": 70.38361358642578, "cluster": 4, "diversity": 0.7708992816966741, "selected": true, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/utils/visualization.py", "file_name": "visualization.py"}}, {"x": 702.3616333007812, "y": -1173.4732666015625, "cluster": 1, "diversity": 0.5833333333333335, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/documents/__init__.py", "file_name": "__init__.py"}}, {"x": -1020.437744140625, "y": 763.2836303710938, "cluster": 2, "diversity": 0.7616314439394305, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/documents/document.py", "file_name": "document.py"}}, {"x": -752.1415405273438, "y": -165.30337524414062, "cluster": 0, "diversity": 0.8095866296766031, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/cli/cli.py", "file_name": "cli.py"}}, {"x": 702.3616333007812, "y": -1173.4732666015625, "cluster": 1, "diversity": 0.5833333333333335, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/cli/__init__.py", "file_name": "__init__.py"}}, {"x": 389.4153747558594, "y": 517.094970703125, "cluster": 4, "diversity": 0.7890816855769608, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/core/sampler.py", "file_name": "sampler.py"}}, {"x": -126.42780303955078, "y": 1154.36669921875, "cluster": 4, "diversity": 0.74494373447073, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/core/selector.py", "file_name": "selector.py"}}, {"x": 702.3616333007812, "y": -1173.4732666015625, "cluster": 1, "diversity": 0.5833333333333335, "selected": false, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/core/__init__.py", "file_name": "__init__.py"}}, {"x": -805.4899291992188, "y": 1566.5675048828125, "cluster": 4, "diversity": 0.7579339677682514, "selected": true, "metadata": {"file_path": "/home/loc/Works/SelectN/src/selectn/core/feature_extraction.py", "file_name": "feature_extraction.py"}}], "selected_indices": [0, 3, 11]};
+            
+            // Set up the SVG
+            const width = 800;
+            const height = 600;
+            const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = d3.select("#visualization")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+                
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+            
+            // Compute scales
+            const xExtent = d3.extent(vizData.points, d => d.x);
+            const yExtent = d3.extent(vizData.points, d => d.y);
+            
+            const xScale = d3.scaleLinear()
+                .domain([xExtent[0] - 1, xExtent[1] + 1])
+                .range([0, innerWidth]);
+                
+            const yScale = d3.scaleLinear()
+                .domain([yExtent[0] - 1, yExtent[1] + 1])
+                .range([innerHeight, 0]);
+            
+            // Set up color scale for clusters
+            const clusters = [...new Set(vizData.points.map(d => d.cluster))];
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+                .domain(clusters);
+            
+            // Create legend
+            const legend = d3.select("#legend");
+            clusters.forEach(cluster => {
+                const item = legend.append("div")
+                    .attr("class", "legend-item");
+                
+                item.append("div")
+                    .attr("class", "legend-color")
+                    .style("background-color", colorScale(cluster));
+                    
+                item.append("span")
+                    .text(`Cluster ${cluster}`);
+            });
+            
+            // Add axes
+            const xAxis = d3.axisBottom(xScale);
+            const yAxis = d3.axisLeft(yScale);
+            
+            g.append("g")
+                .attr("transform", `translate(0, ${innerHeight})`)
+                .call(xAxis);
+                
+            g.append("g")
+                .call(yAxis);
+            
+            // Add points
+            g.selectAll("circle")
+                .data(vizData.points)
+                .enter()
+                .append("circle")
+                .attr("class", d => `point ${d.selected ? "selected" : ""}`)
+                .attr("cx", d => xScale(d.x))
+                .attr("cy", d => yScale(d.y))
+                .attr("r", d => d.selected ? 8 : 5)
+                .attr("fill", d => colorScale(d.cluster))
+                .attr("opacity", 0.7)
+                .on("mouseover", function(event, d) {
+                    d3.select(this).attr("opacity", 1);
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select(this).attr("opacity", 0.7);
+                })
+                .on("click", function(event, d) {
+                    // Display document details
+                    const details = document.getElementById("details");
+                    
+                    let detailsText = "Document Details:\n";
+                    
+                    if (d.metadata && d.metadata.file_path) {
+                        detailsText += `File: ${d.metadata.file_path}\n`;
+                    }
+                    
+                    detailsText += `\nCluster: ${d.cluster}\n`;
+                    detailsText += `Diversity Score: ${d.diversity.toFixed(4)}\n`;
+                    detailsText += `Selected: ${d.selected ? "Yes" : "No"}\n`;
+                    
+                    details.textContent = detailsText;
+                });
+            
+            // Add a legend for selected points
+            svg.append("circle")
+                .attr("cx", width - 150)
+                .attr("cy", 20)
+                .attr("r", 8)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 2);
+                
+            svg.append("text")
+                .attr("x", width - 135)
+                .attr("y", 24)
+                .text("Selected Documents");
+        </script>
+    </body>
+    </html>
+    
