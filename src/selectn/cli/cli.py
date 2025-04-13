@@ -1,7 +1,7 @@
 """
-Command-line interface for SelectN.
+Command-line interface for selectN.
 
-This module provides a CLI for using the SelectN system to select
+This module provides a CLI for using the selectN system to select
 representative samples from a collection of documents.
 """
 import os
@@ -38,7 +38,7 @@ def setup_argparse() -> argparse.ArgumentParser:
         Configured argument parser.
     """
     parser = argparse.ArgumentParser(
-        description="SelectN: Select representative samples from document collections"
+        description="selectN: Select representative samples from document collections"
     )
     
     # Input options

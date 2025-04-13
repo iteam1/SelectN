@@ -1,5 +1,5 @@
 """
-Main interface for the SelectN system.
+Main interface for the selectN system.
 
 This module provides the main Selector class that orchestrates the process
 of selecting representative samples from a collection of documents.

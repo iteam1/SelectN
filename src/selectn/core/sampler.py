@@ -1,5 +1,5 @@
 """
-Core sampling functionality for SelectN.
+Core sampling functionality for selectN.
 
 This module provides abstract base classes and implementations for sampling
 from collections of documents based on various strategies.

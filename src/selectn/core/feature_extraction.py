@@ -1,5 +1,5 @@
 """
-Feature extraction functionality for SelectN.
+Feature extraction functionality for selectN.
 
 This module provides abstract base classes and implementations for extracting
 features from different types of documents.
