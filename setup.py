@@ -15,7 +15,7 @@ setup(
     description="AI-powered representative document sampling",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/SelectN",
+    url="https://github.com/iteam1/selectN",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     classifiers=[
