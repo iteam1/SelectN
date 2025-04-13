@@ -9,17 +9,17 @@ import argparse
 import logging
 from typing import List, Dict, Any, Optional, Union
 
-from src.selectn.documents.document import DocumentCollection
-from src.selectn.core.feature_extraction import (
+from selectn.documents.document import DocumentCollection
+from selectn.core.feature_extraction import (
     TfidfFeatureExtractor, NLPFeatureExtractor, 
     SyntacticFeatureExtractor, HybridFeatureExtractor
 )
-from src.selectn.core.sampler import (
+from selectn.core.sampler import (
     RandomSampler, ClusteringSampler, 
     DiversitySampler, HybridSampler
 )
-from src.selectn.core.selector import Selector
-from src.selectn.utils.visualization import generate_visualization_suite
+from selectn.core.selector import Selector
+from selectn.utils.visualization import generate_visualization_suite
 
 
 # Set up logging

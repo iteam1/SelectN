@@ -10,9 +10,9 @@ import numpy as np
 from typing import List, Dict, Any, Optional, Union, Tuple
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
-from src.selectn.core.feature_extraction import FeatureExtractorBase
-from src.selectn.core.sampler import SamplerBase, ClusteringSampler, DiversitySampler, HybridSampler
-from src.selectn.documents.document import Document, DocumentCollection
+from selectn.core.feature_extraction import FeatureExtractorBase
+from selectn.core.sampler import SamplerBase, ClusteringSampler, DiversitySampler, HybridSampler
+from selectn.documents.document import Document, DocumentCollection
 
 
 class Selector:
