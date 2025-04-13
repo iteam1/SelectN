@@ -66,7 +66,7 @@ selectn --input-dir /path/to/code/files --n-samples 10 --visualize
 
 ### Python API
 
-You can also use SelectN as a library in your Python code:
+You can also use selectN as a library in your Python code:
 
 ```python
 from selectn.documents.document import DocumentCollection

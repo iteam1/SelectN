@@ -1,5 +1,5 @@
 """
-Visualization utilities for SelectN.
+Visualization utilities for selectN.
 
 This module provides functions for visualizing selected samples and patterns.
 """
