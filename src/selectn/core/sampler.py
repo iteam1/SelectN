@@ -10,6 +10,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from sklearn.metrics import pairwise_distances
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 
 
 class SamplerBase(abc.ABC):
@@ -140,6 +142,84 @@ class DiversitySampler(SamplerBase):
             selected_indices.append(next_point)
             
         return selected_indices
+
+
+class OutlierSampler(SamplerBase):
+    """Outlier detection sampling strategy."""
+    
+    def __init__(self, method: str = "isolation_forest"):
+        """
+        Initialize the outlier sampler.
+        
+        Args:
+            method: The outlier detection method to use. 
+                   Options: 'isolation_forest', 'lof' (Local Outlier Factor), 
+                   'distance' (distance-based)
+        """
+        self.method = method
+        
+    def sample(self, vector_representations: np.ndarray, n_samples: int, **kwargs) -> List[int]:
+        """
+        Sample the most n_samples outliers from the given vector representations.
+        
+        Args:
+            vector_representations: The vector representations of the documents.
+            n_samples: The number of outlier samples to select.
+            **kwargs: Additional arguments:
+                - contamination: Expected proportion of outliers (default: auto or 0.1)
+                - random_state: Random state for reproducibility
+                
+        Returns:
+            A list of indices representing the selected outlier samples.
+        """
+        if n_samples > len(vector_representations):
+            raise ValueError(f"Cannot sample {n_samples} from {len(vector_representations)} documents.")
+        
+        contamination = kwargs.get('contamination', 'auto' if self.method == 'isolation_forest' else 0.1)
+        random_state = kwargs.get('random_state', 0)
+        
+        if self.method == "isolation_forest":
+            # Use Isolation Forest for outlier detection
+            clf = IsolationForest(
+                n_estimators=100,
+                contamination=contamination,
+                random_state=random_state
+            )
+            # Negative score represents outliers (lower = more abnormal)
+            scores = -clf.fit(vector_representations).score_samples(vector_representations)
+            
+        elif self.method == "lof":
+            # Use Local Outlier Factor for outlier detection
+            clf = LocalOutlierFactor(
+                n_neighbors=20,
+                contamination=contamination
+            )
+            # Negative of the LOF represents outliers (higher = more abnormal)
+            clf.fit(vector_representations)
+            scores = -clf.negative_outlier_factor_
+            
+        elif self.method == "distance":
+            # Distance-based outlier detection
+            # Calculate pairwise distances
+            distances = pairwise_distances(vector_representations)
+            
+            # For each point, calculate the average distance to its k nearest neighbors
+            k = min(20, len(vector_representations) - 1)
+            avg_distances = []
+            
+            for i in range(len(vector_representations)):
+                # Sort distances and take the k nearest (excluding self)
+                sorted_distances = np.sort(distances[i])[1:k+1]
+                avg_distances.append(np.mean(sorted_distances))
+                
+            scores = np.array(avg_distances)
+        else:
+            raise ValueError(f"Unsupported outlier detection method: {self.method}")
+        
+        # Select the n_samples points with the highest outlier scores
+        selected_indices = np.argsort(scores)[-n_samples:][::-1]
+        
+        return selected_indices.tolist()
 
 
 class HybridSampler(SamplerBase):

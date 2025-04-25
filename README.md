@@ -1,33 +1,38 @@
-# selectN
+# 🔍 selectN
 
-Using AI and NLP techniques to automatically select N representative code samples from large corpora.
+*Using AI and NLP techniques to automatically select **N representative code samples** from large corpora.*
 
-## Features
+---
 
-- **Multiple Feature Extraction Methods**:
-  - TF-IDF based features
-  - NLP-based features using spaCy
-  - Syntactic structure analysis
-  - Hybrid approaches combining multiple methods
+## ✨ Features
 
-- **Diverse Sampling Strategies**:
-  - Random sampling (baseline)
-  - Clustering-based sampling
-  - Diversity-maximizing sampling
-  - Hybrid sampling combining multiple strategies
+**Multiple Feature Extraction Methods**  
+- TF-IDF based features  
+- NLP-based features using spaCy  
+- Syntactic structure analysis  
+- Hybrid approaches combining multiple methods
 
-- **Visualization Tools**:
-  - 2D embeddings visualization
-  - Document similarity heatmaps
-  - Diversity score analysis
-  - Interactive HTML visualizations
+**Diverse Sampling Strategies**  
+- Random sampling (baseline)  
+- Clustering-based sampling  
+- Diversity-maximizing sampling  
+- Hybrid sampling combining multiple strategies  
+- Outlier detection for finding anomalous samples
 
-- **Modular Architecture**:
-  - Extensible for new document types
-  - Pluggable feature extraction methods
-  - Customizable sampling strategies
+**Visualization Tools**  
+- 2D embeddings visualization  
+- Document similarity heatmaps  
+- Diversity score analysis  
+- Interactive HTML visualizations
 
-## Installation
+**Modular Architecture**  
+- Extensible for new document types  
+- Pluggable feature extraction methods  
+- Customizable sampling strategies
+
+---
+
+## ⚙️ Installation
 
 ```bash
 # Clone the repository
@@ -44,11 +49,13 @@ python -m spacy download en_core_web_sm
 pip install -e .
 ```
 
-## Usage
+---
 
-### Command Line Interface
+## 🧪 Usage
 
-`selectN` provides a command-line interface for easy use:
+### 💻 Command Line Interface
+
+Run `selectN` directly from the terminal:
 
 ```bash
 # Basic usage
@@ -66,31 +73,44 @@ selectn --input-dir /path/to/code/files --n-samples 10 --visualize
 # Limit visualization files for large datasets
 selectn --input-dir /path/to/code/files --n-samples 10 --visualize --max-viz-files 500
 
-# Show version information
+# Select outliers using Isolation Forest (default)
+selectn --input-dir /path/to/code/files --n-samples 10 --sampling-method outlier
+
+# Select outliers using Local Outlier Factor
+selectn --input-dir /path/to/code/files --n-samples 10 --sampling-method outlier --outlier-method lof
+
+# Select outliers using distance-based method
+selectn --input-dir /path/to/code/files --n-samples 10 --sampling-method outlier --outlier-method distance --contamination 0.05
+
+# Show version
 selectn --version
 
-# Show help information
+# Show help
 selectn --help
 ```
 
-### Test Data Generation
+---
 
-selectN includes a tool for generating test data to experiment with the system:
+### 🧪 Test Data Generation
+
+Generate synthetic test datasets for experimentation:
 
 ```bash
 # Generate 1000 test text files
 selectn-testgen --output-dir ./test_files --num-files 1000
 
-# Specify a different file extension
+# Use a different file extension
 selectn-testgen --output-dir ./test_files --num-files 500 --extension .log
 
-# Show help information
+# Show help
 selectn-testgen --help
 ```
 
-### Python API
+---
 
-You can also use selectN as a library in your Python code:
+### 🐍 Python API
+
+Use `selectN` as a library in your Python projects:
 
 ```python
 from selectn.documents.document import DocumentCollection
@@ -118,31 +138,34 @@ viz_data = selector.get_visualization_data()
 selector.save_visualization_data(viz_data)
 ```
 
-## Architecture
+---
 
-`selectN` is built with a modular architecture:
+## 🧩 Architecture Overview
 
-### Core Components
+`selectN` is designed with modularity and extensibility in mind.
 
-- **Feature Extraction**: Transforms documents into vector representations
-- **Sampling**: Selects the most representative samples based on various strategies
-- **Selector**: Orchestrates the selection process
+### 🔧 Core Components
+- **Feature Extraction**: Transforms documents into vector embeddings
+- **Sampling**: Selects representative samples using various strategies
+- **Selector**: Orchestrates the overall document selection pipeline
 
-### Document Handling
+### 📄 Document Handling
+- **Document**: Base class for document abstractions  
+- **DocumentCollection**: Manages groups of documents  
+- **DocumentFactory**: Dynamically creates document types based on file extension
 
-- **Document**: Base class for all document types
-- **DocumentCollection**: Manages collections of documents
-- **DocumentFactory**: Creates appropriate document objects based on file type
+### 📊 Visualization
+- Static plots: `matplotlib`, `seaborn`  
+- Interactive HTML: `D3.js`
 
-### Visualization
+---
 
-- Static visualizations with matplotlib and seaborn
-- Interactive visualizations using D3.js
+## 🤝 Contributing
 
-## Contributing
+We welcome contributions from the community! Please feel free to fork the repo and submit a Pull Request 🚀
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.

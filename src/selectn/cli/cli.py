@@ -16,7 +16,7 @@ from selectn.core.feature_extraction import (
 )
 from selectn.core.sampler import (
     RandomSampler, ClusteringSampler, 
-    DiversitySampler, HybridSampler
+    DiversitySampler, HybridSampler, OutlierSampler
 )
 from selectn.core.selector import Selector
 from selectn.utils.visualization import generate_visualization_suite
@@ -98,13 +98,23 @@ def setup_argparse() -> argparse.ArgumentParser:
     )
     sampling_group.add_argument(
         '--sampling-method', type=str, 
-        choices=['random', 'clustering', 'diversity', 'hybrid'], 
+        choices=['random', 'clustering', 'diversity', 'hybrid', 'outlier'], 
         default='hybrid',
         help='Sampling method'
     )
     sampling_group.add_argument(
         '--diversity-weight', type=float, default=0.5,
         help='Weight for diversity in hybrid sampling (0-1)'
+    )
+    sampling_group.add_argument(
+        '--outlier-method', type=str, 
+        choices=['isolation_forest', 'lof', 'distance'],
+        default='isolation_forest',
+        help='Method for outlier detection when using outlier sampling'
+    )
+    sampling_group.add_argument(
+        '--contamination', type=float, default=0.1,
+        help='Expected proportion of outliers (0-0.5) for outlier detection'
     )
     
     # Output options
@@ -198,7 +208,7 @@ def create_feature_extractor(args) -> Union[TfidfFeatureExtractor, NLPFeatureExt
     )
 
 
-def create_sampler(args) -> Union[RandomSampler, ClusteringSampler, DiversitySampler, HybridSampler]:
+def create_sampler(args) -> Union[RandomSampler, ClusteringSampler, DiversitySampler, HybridSampler, OutlierSampler]:
     """
     Create a sampler based on command-line arguments.
     
@@ -216,6 +226,8 @@ def create_sampler(args) -> Union[RandomSampler, ClusteringSampler, DiversitySam
         return DiversitySampler()
     elif args.sampling_method == 'hybrid':
         return HybridSampler()
+    elif args.sampling_method == 'outlier':
+        return OutlierSampler(method=args.outlier_method)
     
     # Default to hybrid
     return HybridSampler()
@@ -268,10 +280,16 @@ def main():
     
     # Select samples
     logger.info(f"Selecting {args.n_samples} samples")
-    selected_documents = selector.select_samples(
-        n_samples=args.n_samples,
-        diversity_weight=args.diversity_weight
-    )
+    if args.sampling_method == 'outlier':
+        selected_documents = selector.select_samples(
+            n_samples=args.n_samples,
+            contamination=args.contamination
+        )
+    else:
+        selected_documents = selector.select_samples(
+            n_samples=args.n_samples,
+            diversity_weight=args.diversity_weight
+        )
     
     # Save results
     logger.info("Saving results")
