@@ -21,6 +21,8 @@ from selectn.core.sampler import (
 from selectn.core.selector import Selector
 from selectn.utils.visualization import generate_visualization_suite
 
+# Version information
+__version__ = "0.2.0"
 
 # Set up logging
 logging.basicConfig(
@@ -39,6 +41,12 @@ def setup_argparse() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         description="selectN: Select representative samples from document collections"
+    )
+    
+    # Version information
+    parser.add_argument(
+        '--version', action='version', version=f'selectN v{__version__}',
+        help='Show version information and exit'
     )
     
     # Input options
@@ -108,6 +116,10 @@ def setup_argparse() -> argparse.ArgumentParser:
     output_group.add_argument(
         '--visualize', '-v', action='store_true',
         help='Generate visualizations'
+    )
+    output_group.add_argument(
+        '--max-viz-files', type=int, default=1000,
+        help='Maximum number of files to include in visualizations (default: 1000)'
     )
     
     return parser
@@ -269,7 +281,13 @@ def main():
     # Generate visualizations if requested
     if args.visualize:
         logger.info("Generating visualizations")
-        viz_data = selector.get_visualization_data()
+        # Check if we need to limit the number of files for visualization
+        if len(document_collection) > args.max_viz_files:
+            logger.warning(f"Limiting visualization to {args.max_viz_files} files (out of {len(document_collection)})")
+            viz_data = selector.get_visualization_data(max_files=args.max_viz_files)
+        else:
+            viz_data = selector.get_visualization_data()
+            
         viz_files = generate_visualization_suite(
             viz_data=viz_data,
             output_dir=args.output_dir

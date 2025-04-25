@@ -9,7 +9,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
 
 setup(
     name="selectn",
-    version="0.1.0",
+    version="0.2.0",
     author="iteam1",
     author_email="info@selectn.dev",
     description="AI-powered representative document sampling",
@@ -38,6 +38,7 @@ setup(
     entry_points={
         "console_scripts": [
             "selectn=selectn.cli.cli:main",
+            "selectn-testgen=selectn.utils.test_data_cli:main",
         ],
     },
 )

@@ -10,9 +10,12 @@ import numpy as np
 from typing import List, Dict, Any, Optional, Union, Tuple
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
+from sklearn.metrics.pairwise import cosine_distances
 from selectn.core.feature_extraction import FeatureExtractorBase
 from selectn.core.sampler import SamplerBase, ClusteringSampler, DiversitySampler, HybridSampler
 from selectn.documents.document import Document, DocumentCollection
+import random
+from sklearn.cluster import KMeans
 
 
 class Selector:
@@ -154,7 +157,6 @@ class Selector:
         if self.vector_representations is None:
             raise ValueError("Documents must be processed first.")
         
-        from sklearn.cluster import KMeans
         kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(self.vector_representations)
         
         return kmeans.labels_
@@ -179,9 +181,13 @@ class Selector:
         
         return diversity_scores
     
-    def get_visualization_data(self) -> Dict[str, Any]:
+    def get_visualization_data(self, max_files=None) -> Dict[str, Any]:
         """
         Get data for visualization.
+        
+        Args:
+            max_files: Maximum number of files to include in visualization.
+                       If None, all files are included.
         
         Returns:
             A dictionary with visualization data.
@@ -189,34 +195,85 @@ class Selector:
         if self.vector_representations is None or self.document_collection is None:
             raise ValueError("Documents must be processed first.")
         
+        # Determine which files to include in visualization
+        n_samples = len(self.document_collection)
+        if max_files is not None and max_files < n_samples:
+            # If we have selected indices, make sure they're included
+            if self.selected_indices:
+                # Start with selected indices
+                include_indices = set(self.selected_indices)
+                
+                # Add random indices until we reach max_files
+                remaining = max_files - len(include_indices)
+                if remaining > 0:
+                    # Get all indices excluding the already selected ones
+                    all_indices = set(range(n_samples)) - include_indices
+                    # Add random indices from the remaining set
+                    include_indices.update(random.sample(list(all_indices), min(remaining, len(all_indices))))
+                
+                # Convert to sorted list
+                include_indices = sorted(include_indices)
+            else:
+                # Just take a random sample
+                include_indices = sorted(random.sample(range(n_samples), max_files))
+            
+            # Subset the vector representations
+            vector_subset = self.vector_representations[include_indices]
+            
+            # Create index mapping from original to subset
+            index_mapping = {old_idx: new_idx for new_idx, old_idx in enumerate(include_indices)}
+            
+            # Map selected indices to new positions
+            if self.selected_indices:
+                selected_indices_mapped = [index_mapping[idx] for idx in self.selected_indices]
+            else:
+                selected_indices_mapped = []
+        else:
+            # Use all data
+            vector_subset = self.vector_representations
+            include_indices = list(range(n_samples))
+            selected_indices_mapped = self.selected_indices or []
+        
         # Reduce dimensions for visualization
         # Use a smaller perplexity for small datasets
-        n_samples = len(self.document_collection)
-        perplexity = min(30, max(5, n_samples // 3))  # Scale perplexity based on sample size
+        subset_size = len(include_indices)
+        perplexity = min(30, max(5, subset_size // 3))  # Scale perplexity based on sample size
         tsne = TSNE(n_components=2, random_state=0, perplexity=perplexity)
-        vectors_2d = tsne.fit_transform(self.vector_representations)
+        vectors_2d = tsne.fit_transform(vector_subset)
         
         # Get cluster assignments if we have enough documents
-        n_clusters = min(5, len(self.document_collection))
-        cluster_labels = self.get_cluster_assignments(n_clusters)
+        n_clusters = min(5, subset_size)
+        if subset_size == n_samples:
+            # Using all data
+            cluster_labels = self.get_cluster_assignments(n_clusters)
+        else:
+            # Need to compute clusters for the subset
+            kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+            cluster_labels = kmeans.fit_predict(vector_subset)
         
         # Get diversity scores
-        diversity_scores = self.get_diversity_scores()
+        if subset_size == n_samples:
+            # Using all data
+            diversity_scores = self.get_diversity_scores()
+        else:
+            # Compute diversity scores for the subset
+            pairwise_distances = cosine_distances(vector_subset)
+            diversity_scores = np.mean(pairwise_distances, axis=1)
         
         # Prepare visualization data
         viz_data = {
             "points": [],
-            "selected_indices": self.selected_indices or []
+            "selected_indices": selected_indices_mapped
         }
         
-        for i in range(len(self.document_collection)):
+        for i, orig_idx in enumerate(include_indices):
             point_data = {
                 "x": float(vectors_2d[i, 0]),
                 "y": float(vectors_2d[i, 1]),
                 "cluster": int(cluster_labels[i]),
                 "diversity": float(diversity_scores[i]),
-                "selected": i in (self.selected_indices or []),
-                "metadata": self.document_collection[i].metadata
+                "selected": i in selected_indices_mapped,
+                "metadata": self.document_collection[orig_idx].metadata
             }
             viz_data["points"].append(point_data)
         

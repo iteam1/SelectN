@@ -62,6 +62,30 @@ selectn --input-dir /path/to/code/files --n-samples 10 --sampling-method diversi
 
 # Generate visualizations
 selectn --input-dir /path/to/code/files --n-samples 10 --visualize
+
+# Limit visualization files for large datasets
+selectn --input-dir /path/to/code/files --n-samples 10 --visualize --max-viz-files 500
+
+# Show version information
+selectn --version
+
+# Show help information
+selectn --help
+```
+
+### Test Data Generation
+
+selectN includes a tool for generating test data to experiment with the system:
+
+```bash
+# Generate 1000 test text files
+selectn-testgen --output-dir ./test_files --num-files 1000
+
+# Specify a different file extension
+selectn-testgen --output-dir ./test_files --num-files 500 --extension .log
+
+# Show help information
+selectn-testgen --help
 ```
 
 ### Python API
